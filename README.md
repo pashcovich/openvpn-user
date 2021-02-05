@@ -1,7 +1,10 @@
 # openvpn-user
 
-### disclaimer
-Not tested in production environments!
+## Disclaimer
+```diff
+- Not tested in production environments! 
+```
+
 
 Use it on your own risk =)
 
@@ -9,14 +12,16 @@ Use it on your own risk =)
 A simple tool to use with openvpn when you need to use `–auth-user-pass-verify` or wherever you want
 
 ### Example
+make sure `openvpn-user` binary available through `PATH` variable and you have `auth.sh` script with `+x` rights available to openvpn server
+
+i.e. put binary to `/usr/local/sbin/` and auth script to `/etc/openvpn/scripts/` dir
 
 part of openvpn server config
 ```bash
+script-security 2
 auth-user-pass-verify /etc/openvpn/scripts/auth.sh via-file
 ```
 
-make sure `openvpn-user` binary available through `PATH` variable 
-i.e. put it in `/usr/local/sbin/openvpn-user`
 
 ### Usage
 ```

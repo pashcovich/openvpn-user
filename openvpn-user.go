@@ -32,6 +32,9 @@ var (
 	listCommand = kingpin.Command("list", "List active users.")
 	listAll     = listCommand.Flag("all", "Show all users include revoked and deleted.").Default("false").Bool()
 
+	checkCommand             = kingpin.Command("check", "check user existent.")
+	checkCommandUserFlag     = checkCommand.Flag("user", "Username.").Required().String()
+
 	authCommand             = kingpin.Command("auth", "Auth user.")
 	authCommandUserFlag     = authCommand.Flag("user", "Username.").Required().String()
 	authCommandPasswordFlag = authCommand.Flag("password", "Password.").Required().String()
@@ -66,6 +69,8 @@ func main() {
 		restoreUser(*restoreCommandUserFlag)
 	case listCommand.FullCommand():
 		printUsers()
+	case checkCommand.FullCommand():
+		_ = checkUserExistent(*checkCommandUserFlag)
 	case authCommand.FullCommand():
 		authUser(*authCommandUserFlag, *authCommandPasswordFlag)
 	case changePasswordCommand.FullCommand():
@@ -128,7 +133,7 @@ func restoreUser(username string) {
 
 func checkUserExistent(username string) bool {
 	// we need to check if there is already such a user
-
+ 	// return true if user exist
 	var c int
 	_ = getDb().QueryRow("SELECT count(*) FROM users WHERE username = $1", username).Scan(&c)
 	if c == 1  {
