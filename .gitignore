@@ -1,0 +1,9 @@
+openvpn-user
+openvpn-user.db
+
+# Editor directories and files
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
