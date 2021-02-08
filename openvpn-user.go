@@ -10,11 +10,15 @@ import (
 	"text/tabwriter"
 )
 
+const (
+	version = "1.0.3-alpha"
+)
+
 var (
 	dbPath = kingpin.Flag("db.path", "path do openvpn-user db").Default("./openvpn-user.db").String()
 
-	dbInitCommand   = kingpin.Command("db-init", "Init db.")
-	dbMigrateCommand   = kingpin.Command("db-migrate", "STUB: Migrate db.")
+	dbInitCommand    = kingpin.Command("db-init", "Init db.")
+	dbMigrateCommand = kingpin.Command("db-migrate", "STUB: Migrate db.")
 
 	createCommand             = kingpin.Command("create", "Create user.")
 	createCommandUserFlag     = createCommand.Flag("user", "Username.").Required().String()
@@ -32,8 +36,8 @@ var (
 	listCommand = kingpin.Command("list", "List active users.")
 	listAll     = listCommand.Flag("all", "Show all users include revoked and deleted.").Default("false").Bool()
 
-	checkCommand             = kingpin.Command("check", "check user existent.")
-	checkCommandUserFlag     = checkCommand.Flag("user", "Username.").Required().String()
+	checkCommand         = kingpin.Command("check", "check user existent.")
+	checkCommandUserFlag = checkCommand.Flag("user", "Username.").Required().String()
 
 	authCommand             = kingpin.Command("auth", "Auth user.")
 	authCommandUserFlag     = authCommand.Flag("user", "Username.").Required().String()
@@ -43,17 +47,17 @@ var (
 	changePasswordCommandUserFlag     = changePasswordCommand.Flag("user", "Username.").Required().String()
 	changePasswordCommandPasswordFlag = changePasswordCommand.Flag("password", "Password.").Required().String()
 
-	//debug   = kingpin.Flag("debug", "Enable debug mode.").Default("false").Bool()
-	//verbose = kingpin.Flag("verbose", "Enable verbose mode.").Default("false").Bool()
+	debug = kingpin.Flag("debug", "Enable debug mode.").Default("false").Bool()
 
+	versionCommand = kingpin.Command("version", "Show version.")
 )
 
 type User struct {
 	id       int64
 	name     string
 	password string
-	revoked   bool
-	deleted   bool
+	revoked  bool
+	deleted  bool
 }
 
 func main() {
@@ -79,7 +83,12 @@ func main() {
 		initDb()
 	case dbMigrateCommand.FullCommand():
 		migrateDb()
+	case versionCommand.FullCommand():
+		showVersion()
 	}
+}
+func showVersion() {
+	fmt.Printf("openvpn-user: version %s n", version)
 }
 
 func getDb() *sql.DB {
@@ -108,38 +117,93 @@ func createUser(username, password string) {
 		_, err := getDb().Exec("INSERT INTO users(username, password) VALUES ($1, $2)", username, string(hash))
 		checkErr(err)
 		fmt.Printf("User %s created\n", username)
+	} else {
+		fmt.Printf("ERROR: User %s already registered\n", username)
+		os.Exit(1)
 	}
+
 }
 
 func deleteUser(username string) {
-	_, err := getDb().Exec("UPDATE users SET deleted = 1 WHERE username = $1", username)
+	res, err := getDb().Exec("UPDATE users SET deleted = 1 WHERE username = $1", username)
 	checkErr(err)
-	fmt.Printf("User %s deleted\n", username)
+	if rowsAffected, rowsErr := res.RowsAffected(); rowsErr != nil {
+		if rowsAffected == 1 {
+			fmt.Printf("User %s deleted\n", username)
+		}
+	} else {
+		if *debug {
+			fmt.Printf("ERROR: due deleting user %s: %s\n", username, rowsErr)
+		}
+	}
 }
 
 func revokedUser(username string) {
-	// TODO: ignore deleted user
-	_, err := getDb().Exec("UPDATE users SET revoked = 1 WHERE username = $1", username)
-	checkErr(err)
-	fmt.Printf("User %s revoked\n", username)
+	if !userDeleted(username) {
+		res, err := getDb().Exec("UPDATE users SET revoked = 1 WHERE username = $1", username)
+		checkErr(err)
+		if rowsAffected, rowsErr := res.RowsAffected(); rowsErr != nil {
+			if rowsAffected == 1 {
+				fmt.Printf("User %s revoked\n", username)
+			}
+		} else {
+			if *debug {
+				fmt.Printf("ERROR: due reoking user %s: %s\n", username, rowsErr)
+			}
+		}
+	}
 }
 
 func restoreUser(username string) {
-	// TODO: ignore deleted user
-	_, err := getDb().Exec("UPDATE users SET revoked = 0 WHERE username = $1", username)
-	checkErr(err)
-	fmt.Printf("User %s restored\n", username)
+	if !userDeleted(username) {
+		res, err := getDb().Exec("UPDATE users SET revoked = 0 WHERE username = $1", username)
+		checkErr(err)
+		if rowsAffected, rowsErr := res.RowsAffected(); rowsErr != nil {
+			if rowsAffected == 1 {
+				fmt.Printf("User %s restored\n", username)
+			}
+		} else {
+			if *debug {
+				fmt.Printf("ERROR: due restoring user %s: %s\n", username, rowsErr)
+			}
+		}
+	}
 }
 
 func checkUserExistent(username string) bool {
 	// we need to check if there is already such a user
- 	// return true if user exist
+	// return true if user exist
 	var c int
 	_ = getDb().QueryRow("SELECT count(*) FROM users WHERE username = $1", username).Scan(&c)
-	if c == 1  {
-		fmt.Printf("WARNING: User %s already registered\n", username)
+	if c == 1 {
+		fmt.Printf("User %s exist\n", username)
 		return true
 	} else {
+		return false
+	}
+}
+
+func userDeleted(username string) bool {
+	// return true if user marked as deleted
+	u := User{}
+	_ = getDb().QueryRow("SELECT * FROM users WHERE username = $1", username).Scan(&u)
+	if u.deleted  {
+		fmt.Printf("User %s marked as deleted\n", username)
+		return true
+	} else {
+		return false
+	}
+}
+
+func userIsActive(username string) bool {
+	// return true if user exist and not deleted and revoked
+	u := User{}
+	_ = getDb().QueryRow("SELECT * FROM users WHERE username = $1", username).Scan(&u)
+	if  !u.revoked && !u.deleted  {
+		fmt.Printf("User %s is active\n", username)
+		return true
+	} else {
+		fmt.Println("User may be deleted or revoked")
 		return false
 	}
 }
@@ -189,20 +253,23 @@ func changeUserPassword(username, password string) {
 	fmt.Println("Password changed")
 }
 
-func authUser(username, password string)  {
+func authUser(username, password string) {
 
 	row := getDb().QueryRow("select * from users where username = $1", username)
 	u := User{}
 	err := row.Scan(&u.id, &u.name, &u.password, &u.revoked, &u.deleted)
 	checkErr(err)
 
-	if ! u.revoked && ! u.deleted {
+	if userIsActive(username) {
 		err = bcrypt.CompareHashAndPassword([]byte(u.password), []byte(password))
 		if err != nil {
-			fmt.Println("Passwords mismatched")
+			fmt.Println("Authorization failed")
+			if *debug {
+				fmt.Println("Passwords mismatched")
+			}
 			os.Exit(1)
 		} else {
-			fmt.Println("Auth successful")
+			fmt.Println("Authorization successful")
 			os.Exit(0)
 		}
 	}
