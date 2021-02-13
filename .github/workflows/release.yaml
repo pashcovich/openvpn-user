@@ -21,5 +21,6 @@ jobs:
         goos: ${{ matrix.goos }}
         goarch: ${{ matrix.goarch }}
         ldflags: '-linkmode external -extldflags "-static" -s -w'
+        pre_command: apt-get update && apt-get install -y libsqlite3 gcc
         binary_name: "ovenvpn-user"
         asset_name: ovenvpn-user-${{ matrix.goos }}-${{ matrix.goarch }}.
