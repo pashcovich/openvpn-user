@@ -16,10 +16,6 @@ jobs:
     steps:
     - name: checkout code
       uses: actions/checkout@v2
-    - name: Get packages
-      uses: mstksg/get-package@v1
-      with:
-        apt-get: sqlite3 gcc
     - name: build binaries
       uses: wangyoucao577/go-release-action@v1.14
       with:
@@ -27,5 +23,6 @@ jobs:
         goos: ${{ matrix.goos }}
         goarch: ${{ matrix.goarch }}
         ldflags: '-linkmode external -extldflags "-static" -s -w'
+        pre_command: bash ./install-deps.sh
         binary_name: "ovenvpn-user"
         asset_name: ovenvpn-user-${{ matrix.goos }}-${{ matrix.goarch }}.
