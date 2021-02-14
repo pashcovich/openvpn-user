@@ -19,7 +19,7 @@ jobs:
     - name: Get packages
       uses: mstksg/get-package@v1
       with:
-        apt-get: libsqlite3 gcc
+        apt-get: sqlite3 gcc
     - name: build binaries
       uses: wangyoucao577/go-release-action@v1.14
       with:
