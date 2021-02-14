@@ -14,13 +14,18 @@ jobs:
         goos: [linux, windows, darwin]
         goarch: ["386", amd64]
     steps:
-    - uses: actions/checkout@v2
-    - uses: wangyoucao577/go-release-action@v1.14
+    - name: checkout code
+      uses: actions/checkout@v2
+    - name: Get packages
+      uses: mstksg/get-package@v1
+      with:
+        apt-get: libsqlite3 gcc
+    - name: build binaries
+      uses: wangyoucao577/go-release-action@v1.14
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         goos: ${{ matrix.goos }}
         goarch: ${{ matrix.goarch }}
         ldflags: '-linkmode external -extldflags "-static" -s -w'
-        pre_command: apt-get update && apt-get install -y libsqlite3 gcc
         binary_name: "ovenvpn-user"
         asset_name: ovenvpn-user-${{ matrix.goos }}-${{ matrix.goarch }}.
