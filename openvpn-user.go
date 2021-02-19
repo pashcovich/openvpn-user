@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	version = "1.0.3-alpha"
+	version = "1.0.3-rc.1"
 )
 
 var (
@@ -49,7 +49,6 @@ var (
 
 	debug = kingpin.Flag("debug", "Enable debug mode.").Default("false").Bool()
 
-	versionCommand = kingpin.Command("version", "Show version.")
 )
 
 type User struct {
@@ -61,7 +60,7 @@ type User struct {
 }
 
 func main() {
-
+	kingpin.Version(version)
 	switch kingpin.Parse() {
 	case createCommand.FullCommand():
 		createUser(*createCommandUserFlag, *createCommandPasswordFlag)
@@ -83,12 +82,7 @@ func main() {
 		initDb()
 	case dbMigrateCommand.FullCommand():
 		migrateDb()
-	case versionCommand.FullCommand():
-		showVersion()
 	}
-}
-func showVersion() {
-	fmt.Printf("openvpn-user: version %s n", version)
 }
 
 func getDb() *sql.DB {
