@@ -1,6 +1,5 @@
-# .github/workflows/release.yaml
-
-on: 
+name: Build and publish binaries (releases only)
+on:
   release:
     types: [created]
 
@@ -10,7 +9,6 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        # build and publish in parallel: linux/386, linux/amd64, windows/386, windows/amd64, darwin/386, darwin/amd64 
         goos: [linux]
         goarch: ["386", amd64]
     steps:
