@@ -25,4 +25,4 @@ jobs:
           build_command: bash ./build_arm.sh
           pre_command: bash ./install-deps_arm.sh
           binary_name: "openvpn-user-${{ matrix.goarch }}"
-          asset_name: openvpn-user-${{ matrix.goos }}-${{ matrix.goarch }}.
+          asset_name: openvpn-user-${{ matrix.goos }}-${{ matrix.goarch }}

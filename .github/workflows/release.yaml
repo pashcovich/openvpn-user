@@ -23,4 +23,4 @@ jobs:
         ldflags: '-linkmode external -extldflags "-static" -s -w'
         pre_command: bash ./install-deps.sh
         binary_name: "openvpn-user"
-        asset_name: openvpn-user-${{ matrix.goos }}-${{ matrix.goarch }}.
+        asset_name: openvpn-user-${{ matrix.goos }}-${{ matrix.goarch }}
