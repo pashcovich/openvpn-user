@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	version = "1.0.3"
+	version = "1.0.4"
 )
 
 var (
@@ -24,8 +24,9 @@ var (
 	createCommandUserFlag     = createCommand.Flag("user", "Username.").Required().String()
 	createCommandPasswordFlag = createCommand.Flag("password", "Password.").Required().String()
 
-	deleteCommand         = kingpin.Command("delete", "Delete user.")
-	deleteCommandUserFlag = deleteCommand.Flag("user", "Username.").Required().String()
+	deleteCommand              = kingpin.Command("delete", "Delete user.")
+	deleteCommandUserForceFlag = deleteCommand.Flag("force", "delete from db.").Default("false").Bool()
+	deleteCommandUserFlag      = deleteCommand.Flag("user", "Username.").Required().String()
 
 	revokeCommand         = kingpin.Command("revoke", "Revoke user.")
 	revokeCommandUserFlag = revokeCommand.Flag("user", "Username.").Required().String()
@@ -48,7 +49,6 @@ var (
 	changePasswordCommandPasswordFlag = changePasswordCommand.Flag("password", "Password.").Required().String()
 
 	debug = kingpin.Flag("debug", "Enable debug mode.").Default("false").Bool()
-
 )
 
 type User struct {
@@ -119,7 +119,11 @@ func createUser(username, password string) {
 }
 
 func deleteUser(username string) {
-	res, err := getDb().Exec("UPDATE users SET deleted = 1 WHERE username = $1", username)
+	deleteQuery := "UPDATE users SET deleted = 1 WHERE username = $1"
+	if *deleteCommandUserForceFlag {
+		deleteQuery = "DELETE FROM users WHERE username = $1"
+	}
+	res, err := getDb().Exec(deleteQuery, username)
 	checkErr(err)
 	if rowsAffected, rowsErr := res.RowsAffected(); rowsErr != nil {
 		if rowsAffected == 1 {
@@ -181,7 +185,7 @@ func userDeleted(username string) bool {
 	// return true if user marked as deleted
 	u := User{}
 	_ = getDb().QueryRow("SELECT * FROM users WHERE username = $1", username).Scan(&u)
-	if u.deleted  {
+	if u.deleted {
 		fmt.Printf("User %s marked as deleted\n", username)
 		return true
 	} else {
@@ -193,7 +197,7 @@ func userIsActive(username string) bool {
 	// return true if user exist and not deleted and revoked
 	u := User{}
 	_ = getDb().QueryRow("SELECT * FROM users WHERE username = $1", username).Scan(&u)
-	if  !u.revoked && !u.deleted  {
+	if !u.revoked && !u.deleted {
 		fmt.Printf("User %s is active\n", username)
 		return true
 	} else {

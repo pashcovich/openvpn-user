@@ -44,8 +44,11 @@ Commands:
   create --user=USER --password=PASSWORD
     Create user.
 
-  delete --user=USER
+  delete --user=USER [<flags>]
     Delete user.
+    
+    flags:
+        --force  Delete from db
 
   revoke --user=USER
     Revoke user.
@@ -63,5 +66,5 @@ Commands:
     Auth user.
 
   change-password --user=USER --password=PASSWORD
-    Change password
+    Change password.
 ```
