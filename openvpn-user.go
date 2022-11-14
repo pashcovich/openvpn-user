@@ -373,9 +373,9 @@ func getUserOtpSecret(username string) {
 
 func authUser(username, password, totp string) {
 
-	row := getDb().QueryRow("select * from users where username = $1", username)
+	row := getDb().QueryRow("SELECT id, username, paasword, revoked, deleted, secret, app_configured FROM users WHERE username = $1", username)
 	u := User{}
-	err := row.Scan(&u.id, &u.name, &u.password, &u.revoked, &u.deleted, &u.secret)
+	err := row.Scan(&u.id, &u.name, &u.password, &u.revoked, &u.deleted, &u.secret, &u.appConfigured)
 	checkErr(err)
 
 	if userIsActive(username) {
