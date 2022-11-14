@@ -59,10 +59,10 @@ var (
 	updateSecretCommandUserFlag   = updateSecretCommand.Flag("user", "Username.").Required().String()
 	updateSecretCommandSecretFlag = updateSecretCommand.Flag("secret", "Secret.").Default("generate").String()
 
-	registerAppCommand         = kingpin.Command("register-app", "update OTP secret")
+	registerAppCommand         = kingpin.Command("register-app", "register 2FA application")
 	registerAppCommandUserFlag = registerAppCommand.Flag("user", "Username.").Required().String()
 
-	getSecretCommand         = kingpin.Command("get-secret", "gwt OTP secret")
+	getSecretCommand         = kingpin.Command("get-secret", "get OTP secret")
 	getSecretCommandUserFlag = getSecretCommand.Flag("user", "Username.").Required().String()
 
 	debug = kingpin.Flag("debug", "Enable debug mode.").Default("false").Bool()
@@ -391,15 +391,20 @@ func authUser(username, password, totp string) {
 			trimmedToken := strings.TrimSpace(totp)
 
 			// Validate token
-			_, err := otpConfig.Authenticate(trimmedToken)
+			ok, err := otpConfig.Authenticate(trimmedToken)
 
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
-			} else {
+			}
+			if ok {
 				fmt.Println("Authorization successful")
 				os.Exit(0)
+			} else {
+				fmt.Println("Token mismatched")
+				os.Exit(1)
 			}
+
 		} else if len(password) > 0 && totp == "" {
 
 			err = bcrypt.CompareHashAndPassword([]byte(u.password), []byte(password))

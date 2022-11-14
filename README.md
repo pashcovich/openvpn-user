@@ -30,6 +30,8 @@ usage: openvpn-user [<flags>] <command> [<args> ...]
 Flags:
   --help                         Show context-sensitive help (also try --help-long and --help-man).
   --db.path="./openvpn-user.db"  path do openvpn-user db
+  --debug                        Enable debug mode.
+  --version                      Show application version.
 
 Commands:
   help [<command>...]
@@ -46,9 +48,6 @@ Commands:
 
   delete --user=USER [<flags>]
     Delete user.
-    
-    flags:
-        --force  Delete from db
 
   revoke --user=USER
     Revoke user.
@@ -58,13 +57,23 @@ Commands:
 
   list [<flags>]
     List active users.
-    
-    flags:
-      --all  Show all users include revoked and delete
 
-  auth --user=USER --password=PASSWORD
+  check --user=USER
+    check user existent.
+
+  auth --user=USER [<flags>]
     Auth user.
 
   change-password --user=USER --password=PASSWORD
-    Change password.
+    Change password
+
+  update-secret --user=USER [<flags>]
+    update OTP secret
+
+  register-app --user=USER
+    register 2FA application
+
+  get-secret --user=USER
+    get OTP secret
+
 ```
