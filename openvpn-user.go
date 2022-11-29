@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	version = "1.0.6"
+	version = "1.0.7"
 )
 
 var (
@@ -55,6 +55,9 @@ var (
 	registerAppCommand         = kingpin.Command("register-app", "register 2FA application")
 	registerAppCommandUserFlag = registerAppCommand.Flag("user", "Username.").Short('u').Required().String()
 	registerAppCommandTotpFlag = registerAppCommand.Flag("totp", "TOTP.").Short('t').Required().String()
+
+	resetAppCommand         = kingpin.Command("reset-app", "register 2FA application")
+	resetAppCommandUserFlag = resetAppCommand.Flag("user", "Username.").Short('u').Required().String()
 
 	checkAppCommand         = kingpin.Command("check-app", "check 2FA application")
 	checkAppCommandUserFlag = checkAppCommand.Flag("user", "Username.").Short('u').Required().String()
@@ -120,6 +123,8 @@ func main() {
 		wrap(openvpnUser.RegisterOtpSecret(*updateSecretCommandUserFlag, *updateSecretCommandSecretFlag))
 	case registerAppCommand.FullCommand():
 		wrap(openvpnUser.RegisterOtpApplication(*registerAppCommandUserFlag, *registerAppCommandTotpFlag))
+	case resetAppCommand.FullCommand():
+		wrap(openvpnUser.ResetOtpApplication(*resetAppCommandUserFlag))
 	case checkAppCommand.FullCommand():
 		appConfigured, appErr := openvpnUser.IsSecondFactorEnabled(*checkAppCommandUserFlag)
 		if appErr != nil {

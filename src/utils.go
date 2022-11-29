@@ -2,20 +2,17 @@ package src
 
 import "crypto/rand"
 
-func randStr(strSize int, randType string) string {
+func RandStr(strSize int, randType string) string {
 
 	var dictionary string
 
-	if randType == "alphanum" {
-		dictionary = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
-	}
-
-	if randType == "alpha" {
-		dictionary = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
-	}
-
-	if randType == "number" {
+	switch randType {
+	case "number":
 		dictionary = "0123456789"
+	case "alpha":
+		dictionary = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+	default:
+		dictionary = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
 	}
 
 	var bytes = make([]byte, strSize)

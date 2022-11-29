@@ -186,7 +186,7 @@ func (oUser *OpenvpnUser) ChangeUserPassword(username, password string) (string,
 func (oUser *OpenvpnUser) RegisterOtpSecret(username, secret string) (string, error) {
 	if oUser.userIsActive(username) {
 		if secret == "generate" {
-			randomStr := randStr(6, "alphanum")
+			randomStr := RandStr(6, "alphanum")
 
 			secret = base32.StdEncoding.EncodeToString([]byte(randomStr))
 			log.Debug("new generated secret for user %s:  %s", username, secret)
@@ -224,6 +224,24 @@ func (oUser *OpenvpnUser) RegisterOtpApplication(username, totp string) (string,
 			}
 		}
 		return "OTP application already configured", nil
+	}
+	return "", userIsNotActiveError
+}
+func (oUser *OpenvpnUser) ResetOtpApplication(username string) (string, error) {
+	if oUser.userIsActive(username) {
+
+		appConfigured, appErr := oUser.IsSecondFactorEnabled(username)
+		if appErr != nil {
+			return "", appErr
+		}
+		if appConfigured {
+			_, err := oUser.Database.Exec("UPDATE users SET app_configured = 0 WHERE username = $2")
+			if err != nil {
+				return "", err
+			}
+			return "OTP application reset successful", nil
+		}
+		return "OTP application not configured", nil
 	}
 	return "", userIsNotActiveError
 }
