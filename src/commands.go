@@ -213,7 +213,7 @@ func (oUser *OpenvpnUser) RegisterOtpApplication(username, totp string) (string,
 				return "", authErr
 			}
 			if authOk {
-				_, err := oUser.Database.Exec("UPDATE users SET app_configured = 1 WHERE username = $2")
+				_, err := oUser.Database.Exec("UPDATE users SET app_configured = 1 WHERE username = $1", username)
 				if err != nil {
 					return "", err
 				}
@@ -232,7 +232,7 @@ func (oUser *OpenvpnUser) ResetOtpApplication(username string) (string, error) {
 			return "", appErr
 		}
 		if appConfigured {
-			_, err := oUser.Database.Exec("UPDATE users SET app_configured = 0 WHERE username = $2")
+			_, err := oUser.Database.Exec("UPDATE users SET app_configured = 0 WHERE username = $1", username)
 			if err != nil {
 				return "", err
 			}
@@ -263,6 +263,7 @@ func (oUser *OpenvpnUser) IsSecondFactorEnabled(username string) (bool, error) {
 		if u.name == username {
 			return u.appConfigured, nil
 		}
+		
 		return false, checkAppError
 	}
 	return false, userIsNotActiveError
