@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	version = "1.0.7"
+	version = "1.0.8"
 )
 
 var (
@@ -112,7 +112,10 @@ func main() {
 				kingpin.Fatalf(authErr.Error())
 			} else if authSuccessful {
 				fmt.Println("Authorization successful")
+			} else {
+				fmt.Println("Authorization failed")
 			}
+
 		} else {
 			fmt.Println("Please provide only one type of auth flag")
 			os.Exit(1)
@@ -131,6 +134,8 @@ func main() {
 			kingpin.Fatalf(appErr.Error())
 		} else if appConfigured {
 			fmt.Println("App configured")
+		} else {
+			fmt.Println("App not configured yet")
 		}
 	case getSecretCommand.FullCommand():
 		wrap(openvpnUser.GetUserOtpSecret(*getSecretCommandUserFlag))

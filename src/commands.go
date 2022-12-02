@@ -5,7 +5,6 @@ import (
 	"encoding/base32"
 	"fmt"
 	"github.com/dgryski/dgoogauth"
-	log "github.com/sirupsen/logrus"
 	"golang.org/x/crypto/bcrypt"
 	"os"
 	"strings"
@@ -18,7 +17,7 @@ func (oUser *OpenvpnUser) InitDb() {
 	checkErr(err)
 	_, err = oUser.Database.Exec("CREATE TABLE IF NOT EXISTS migrations(id integer not null primary key autoincrement, name string)")
 	checkErr(err)
-	log.Infof("Database initialized at %v", oUser.Database.Driver())
+	fmt.Println("Database initialized")
 }
 
 func (oUser *OpenvpnUser) CreateUser(username, password string) (string, error) {
@@ -150,7 +149,6 @@ func (oUser *OpenvpnUser) listUsers(all bool) []User {
 		u := User{}
 		err = rows.Scan(&u.id, &u.name, &u.password, &u.revoked, &u.deleted, &u.appConfigured)
 		if err != nil {
-			//log.Error(err)
 			continue
 		}
 		users = append(users, u)
@@ -169,7 +167,7 @@ func (oUser *OpenvpnUser) PrintUsers(all bool) {
 		}
 		_ = w.Flush()
 	} else {
-		log.Print("No users created yet")
+		fmt.Println("No users created yet")
 	}
 }
 
@@ -186,10 +184,9 @@ func (oUser *OpenvpnUser) ChangeUserPassword(username, password string) (string,
 func (oUser *OpenvpnUser) RegisterOtpSecret(username, secret string) (string, error) {
 	if oUser.userIsActive(username) {
 		if secret == "generate" {
-			randomStr := RandStr(6, "alphanum")
+			randomStr := RandStr(20, "num")
 
 			secret = base32.StdEncoding.EncodeToString([]byte(randomStr))
-			log.Debug("new generated secret for user %s:  %s", username, secret)
 		}
 
 		_, err := oUser.Database.Exec("UPDATE users SET secret = $1 WHERE username = $2", secret, username)
@@ -258,7 +255,11 @@ func (oUser *OpenvpnUser) GetUserOtpSecret(username string) (string, error) {
 func (oUser *OpenvpnUser) IsSecondFactorEnabled(username string) (bool, error) {
 	if oUser.userIsActive(username) {
 		u := User{}
-		_ = oUser.Database.QueryRow("SELECT username, appConfigured FROM users WHERE username = $1", username).Scan(&u.name, &u.appConfigured)
+		err := oUser.Database.QueryRow("SELECT username, app_configured FROM users WHERE username = $1", username).Scan(&u.name, &u.appConfigured)
+		if err != nil {
+			return false, err
+		}
+
 		if u.name == username {
 			return u.appConfigured, nil
 		}
@@ -290,10 +291,10 @@ func (oUser *OpenvpnUser) AuthUser(username, password, totp string) (bool, error
 
 			trimmedToken := strings.TrimSpace(totp)
 
-			ok, err := otpConfig.Authenticate(trimmedToken)
+			ok, authErr := otpConfig.Authenticate(trimmedToken)
 
-			if err != nil {
-				log.Error(err)
+			if authErr != nil {
+				fmt.Println(authErr)
 			}
 			if ok {
 				return true, nil
@@ -329,17 +330,17 @@ func (oUser *OpenvpnUser) MigrateDb() {
 			if err == sql.ErrNoRows {
 				continue
 			}
-			log.Fatal(err)
+			fmt.Println(err)
 		}
 		if c == 0 {
-			log.Info("Migrating database with new migration %s\n", migration.name)
+			fmt.Printf("Migrating database with new migration %s\n", migration.name)
 			_, err = oUser.Database.Exec(migration.sql)
 			checkErr(err)
 			_, err = oUser.Database.Exec("INSERT INTO migrations(name) VALUES ($1)", migration.name)
 			checkErr(err)
 		}
 	}
-	log.Info("Migrations are up to date")
+	fmt.Println("Migrations are up to date")
 }
 
 func checkErr(err error) {
