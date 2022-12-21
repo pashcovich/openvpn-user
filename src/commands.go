@@ -13,7 +13,7 @@ import (
 
 func (oUser *OpenvpnUser) InitDb() {
 	// boolean fields are integer because of sqlite does not support boolean: 1 = true, 0 = false
-	_, err := oUser.Database.Exec("CREATE TABLE IF NOT EXISTS users(id integer not null primary key autoincrement, username string UNIQUE, password string, revoked integer default 0, deleted integer default 0)")
+	_, err := oUser.Database.Exec("CREATE TABLE IF NOT EXISTS users(id integer not null primary key autoincrement, username string UNIQUE, password string, revoked integer default 0, deleted integer default 0,app_configured integer default 1)")
 	checkErr(err)
 	_, err = oUser.Database.Exec("CREATE TABLE IF NOT EXISTS migrations(id integer not null primary key autoincrement, name string)")
 	checkErr(err)
